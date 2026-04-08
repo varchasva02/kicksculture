@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed | KicksCulture</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="confirmation-page">
+    <div class="confirmation-card" id="confirmationCard">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const order = JSON.parse(localStorage.getItem('kc_last_order'));
+      const card = document.getElementById('confirmationCard');
+
+      if (!order) {
+        card.innerHTML = `
+          <div class="success-icon">🛒</div>
+          <h1 style="color:var(--text-primary)">No Order Found</h1>
+          <p style="color:var(--text-muted);margin-bottom:2rem;">You haven't placed any orders yet.</p>
+          <a href="products.html" class="btn-primary">Start Shopping →</a>`;
+        return;
+      }
+
+      let itemsRows = order.items.map(item => `
+        <tr>
+          <td>${item.name}<br><small style="color:var(--text-muted)">Size: UK ${item.size}</small></td>
+          <td>${item.quantity}</td>
+          <td style="text-align:right;">${formatPrice(item.price)}</td>
+        </tr>`).join('');
+
+      card.innerHTML = `
+        <div class="success-icon">✓</div>
+        <h1>Order Confirmed!</h1>
+        <p class="order-id">Order ID: <strong>${order.id}</strong></p>
+        <p style="color:var(--text-secondary);margin-bottom:1.5rem;">
+          Thank you, <strong>${order.customer.name}</strong>! Your order has been placed successfully.
+          ${order.paymentMethod === 'Cash on Delivery' ? 'Please keep the amount ready for delivery.' : 'Payment received.'}
+        </p>
+        <div style="background:var(--surface);border-radius:var(--radius-md);padding:1.2rem;text-align:left;margin-bottom:1.5rem;">
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;">DELIVERY ADDRESS</div>
+          <div style="font-size:0.9rem;">${order.customer.address}, ${order.customer.city} - ${order.customer.pincode}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.3rem;">${order.customer.phone} · ${order.customer.email}</div>
+        </div>
+        <table class="order-summary-table">
+          <thead><tr><th>Item</th><th>Qty</th><th style="text-align:right;">Price</th></tr></thead>
+          <tbody>
+            ${itemsRows}
+          </tbody>
+        </table>
+        <div style="text-align:left;margin-top:1rem;">
+          <div class="summary-row"><span class="label">Subtotal</span><span>${formatPrice(order.subtotal)}</span></div>
+          <div class="summary-row"><span class="label">Shipping</span><span>${order.shipping === 0 ? '<span style="color:var(--success)">FREE</span>' : formatPrice(order.shipping)}</span></div>
+          ${order.discount > 0 ? `<div class="summary-row discount"><span class="label">Prepaid Discount</span><span class="value">-${formatPrice(order.discount)}</span></div>` : ''}
+          <div class="summary-row total"><span class="label">Total Paid</span><span>${formatPrice(order.total)}</span></div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">Payment: ${order.paymentMethod}</div>
+        </div>
+        <div style="margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+          <a href="products.html" class="btn-primary">Continue Shopping →</a>
+          <a href="index.html" class="btn-secondary">← Back to Home</a>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

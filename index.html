@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KicksCulture - Your ultimate destination for premium sneakers from Nike, Adidas, Puma, Jordan and more.">
+  <title>KicksCulture | Premium Sneakers Store</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-text slide-up">
+        <h1>Step Into <span class="gradient-text">Your Style</span></h1>
+        <p>Discover the latest drops from the world's most iconic sneaker brands. Premium kicks, unmatched culture.</p>
+        <div class="hero-buttons">
+          <a href="products.html" class="btn-primary">Shop Now →</a>
+          <a href="#trending" class="btn-secondary">🔥 Trending</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <h3>500<span>+</span></h3>
+            <p>Sneakers</p>
+          </div>
+          <div class="hero-stat">
+            <h3>15K<span>+</span></h3>
+            <p>Happy Customers</p>
+          </div>
+          <div class="hero-stat">
+            <h3>5<span>★</span></h3>
+            <p>Top Brands</p>
+          </div>
+        </div>
+      </div>
+      <div class="hero-image slide-up">
+        <img src="assets/hero-sneaker.png" alt="Featured Sneaker" onerror="this.style.display='none'">
+      </div>
+    </div>
+  </section>
+
+  <!-- Brands Section -->
+  <section class="section" id="brands">
+    <div class="section-header">
+      <h2 class="section-title">Shop by <span class="accent">Brand</span></h2>
+      <a href="products.html" class="section-link">View All →</a>
+    </div>
+    <div class="brands-grid" id="brandsGrid"></div>
+  </section>
+
+  <!-- Trending Section -->
+  <section class="section" id="trending">
+    <div class="section-header">
+      <h2 class="section-title">🔥 <span class="accent">Trending</span> Now</h2>
+      <a href="products.html?sort=popular" class="section-link">See All →</a>
+    </div>
+    <div class="products-grid" id="trendingGrid"></div>
+  </section>
+
+  <!-- Featured Section -->
+  <section class="section" id="featured">
+    <div class="section-header">
+      <h2 class="section-title">⭐ Editor's <span class="accent">Picks</span></h2>
+    </div>
+    <div class="products-grid" id="featuredGrid"></div>
+  </section>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Render brands
+      const brandsGrid = document.getElementById('brandsGrid');
+      if (brandsGrid) {
+        brandsGrid.innerHTML = BRANDS.map(brand => {
+          const count = getProductsByBrand(brand.id).length;
+          return `
+            <a href="products.html?brand=${brand.id}" class="brand-card" style="--brand-color: ${brand.colorCode}20">
+              <div class="brand-icon" style="color:${brand.colorCode}">${brand.logo}</div>
+              <div class="brand-name">${brand.name}</div>
+              <div class="brand-count">${count} Products</div>
+            </a>`;
+        }).join('');
+      }
+
+      // Render trending
+      const trendingGrid = document.getElementById('trendingGrid');
+      if (trendingGrid) {
+        trendingGrid.innerHTML = getTrendingProducts().slice(0, 8).map(p => renderProductCard(p)).join('');
+      }
+
+      // Render featured
+      const featuredGrid = document.getElementById('featuredGrid');
+      if (featuredGrid) {
+        featuredGrid.innerHTML = getFeaturedProducts().map(p => renderProductCard(p)).join('');
+      }
+    });
+  </script>
+</body>
+</html>

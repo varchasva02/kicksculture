@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="View sneaker details, select your size, and add to cart.">
+  <title>Product Details | KicksCulture</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="product-detail" id="productDetailContainer">
+    <!-- Rendered by JS -->
+  </div>
+
+  <!-- Related Products -->
+  <section class="section" id="relatedSection" style="display:none;">
+    <div class="section-header">
+      <h2 class="section-title">You May Also <span class="accent">Like</span></h2>
+    </div>
+    <div class="products-grid" id="relatedGrid"></div>
+  </section>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    let selectedSize = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const productId = parseInt(params.get('id'));
+      const product = getProductById(productId);
+
+      if (!product) {
+        document.getElementById('productDetailContainer').innerHTML = `
+          <div class="empty-cart" style="grid-column:1/-1;">
+            <div class="icon">😕</div><h2>Product not found</h2>
+            <p>Sorry, this product doesn't exist.</p>
+            <a href="products.html" class="btn-primary mt-2">Browse Products</a>
+          </div>`;
+        return;
+      }
+
+      const brand = getBrandById(product.brand);
+      const discount = getDiscount(product);
+      const stockStatus = getStockStatus(product.stock);
+      const stars = renderStars(product.rating);
+
+      document.title = `${brand ? brand.name : ''} ${product.name} | KicksCulture`;
+
+      document.getElementById('productDetailContainer').innerHTML = `
+        <div class="product-gallery">
+          ${getProductImage(product)}
+        </div>
+        <div class="product-info">
+          <div class="breadcrumb">
+            <a href="index.html">Home</a> <span>/</span>
+            <a href="products.html">Products</a> <span>/</span>
+            <a href="products.html?brand=${product.brand}">${brand ? brand.name : product.brand}</a> <span>/</span>
+            <span>${product.name}</span>
+          </div>
+          <span class="brand-tag">${brand ? brand.name : product.brand}</span>
+          <h1 class="product-title">${product.name}</h1>
+          <div class="rating-row">
+            <span class="stars">${stars}</span>
+            <span class="text">${product.rating} · ${product.reviews} reviews</span>
+          </div>
+          <div class="price-section">
+            <span class="current-price">${formatPrice(product.price)}</span>
+            ${product.originalPrice ? `<span class="original-price">${formatPrice(product.originalPrice)}</span>` : ''}
+            ${discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : ''}
+          </div>
+          <p class="description">${product.description}</p>
+          <div class="stock-status ${stockStatus.class}">
+            <span class="stock-dot"></span> ${stockStatus.text}
+          </div>
+          <div class="size-section">
+            <label>Select Size (UK)</label>
+            <div class="size-selector" id="sizeSelector">
+              ${product.sizes.map(s => `<button class="size-btn" data-size="${s}" onclick="selectSize(this)">${s}</button>`).join('')}
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn-add-cart" id="addToCartBtn" onclick="handleAddToCart(${product.id})" ${product.stock <= 0 ? 'disabled style="opacity:0.5"' : ''}>
+              🛒 ${product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+            <button class="btn-wishlist ${wishlist.has(product.id) ? 'wishlisted' : ''}" data-wishlist-btn data-product-id="${product.id}" onclick="toggleWishlist(${product.id})">
+              ${wishlist.has(product.id) ? '♥' : '♡'}
+            </button>
+          </div>
+          <div style="background:var(--surface);border-radius:var(--radius-md);padding:1rem;margin-top:1rem;">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;font-size:0.85rem;color:var(--text-secondary);">
+              <span>🚚 Free shipping over ₹5,000</span>
+              <span>↩️ 30-day returns</span>
+              <span>✓ 100% authentic</span>
+            </div>
+          </div>
+        </div>`;
+
+      // Related products
+      const related = PRODUCTS.filter(p => p.brand === product.brand && p.id !== product.id).slice(0, 4);
+      if (related.length > 0) {
+        document.getElementById('relatedSection').style.display = 'block';
+        document.getElementById('relatedGrid').innerHTML = related.map(p => renderProductCard(p)).join('');
+      }
+    });
+
+    function selectSize(btn) {
+      document.querySelectorAll('#sizeSelector .size-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedSize = parseInt(btn.dataset.size);
+    }
+
+    function handleAddToCart(productId) {
+      if (!selectedSize) {
+        showToast('Please select a size first', 'error');
+        return;
+      }
+      addToCart(productId, selectedSize, 1);
+    }
+  </script>
+</body>
+</html>

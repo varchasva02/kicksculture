@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | KicksCulture</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Admin Login Gate -->
+  <div class="auth-page" id="adminLoginGate">
+    <div class="auth-card">
+      <div class="auth-logo">KicksCulture</div>
+      <p class="auth-subtitle">🔒 Admin access only. Enter password to continue.</p>
+      <form class="auth-form" onsubmit="return verifyAdmin(event)">
+        <div class="form-group">
+          <label for="adminPassword">Admin Password</label>
+          <input type="password" id="adminPassword" placeholder="Enter admin password" required autofocus>
+          <span class="error-msg" id="adminPassError">Incorrect password</span>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Unlock Admin Panel →</button>
+      </form>
+      <p style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-top:1.5rem;">
+        Default password: <code style="background:var(--surface);padding:0.2rem 0.5rem;border-radius:4px;">admin123</code>
+      </p>
+    </div>
+  </div>
+
+  <!-- Admin Panel (hidden until authenticated) -->
+  <div class="admin-page" id="adminPanel" style="display:none;">
+    <div class="page-title-section" style="padding:100px 0 1.5rem;">
+      <h1>Admin <span class="accent">Panel</span></h1>
+      <p class="subtitle">Manage your sneaker inventory</p>
+    </div>
+    <div class="admin-layout">
+      <!-- Add/Edit Product Form -->
+      <div class="admin-form-card">
+        <h2 id="formTitle">Add New Product</h2>
+        <form id="adminProductForm">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="adminName">Product Name *</label>
+              <input type="text" id="adminName" placeholder="e.g. Air Max 90" required>
+            </div>
+            <div class="form-group">
+              <label for="adminBrand">Brand *</label>
+              <select id="adminBrand" required>
+                <option value="">Select Brand</option>
+                <option value="nike">Nike</option>
+                <option value="adidas">Adidas</option>
+                <option value="puma">Puma</option>
+                <option value="jordan">Jordan</option>
+                <option value="newbalance">New Balance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="adminCategory">Category *</label>
+              <select id="adminCategory" required>
+                <option value="">Select Category</option>
+                <option value="running">Running</option>
+                <option value="lifestyle">Lifestyle</option>
+                <option value="basketball">Basketball</option>
+                <option value="skateboarding">Skateboarding</option>
+                <option value="training">Training</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="adminPrice">Price (₹) *</label>
+              <input type="number" id="adminPrice" placeholder="9999" min="0" required>
+            </div>
+            <div class="form-group">
+              <label for="adminOriginalPrice">Original Price (₹)</label>
+              <input type="number" id="adminOriginalPrice" placeholder="12999" min="0">
+            </div>
+            <div class="form-group">
+              <label for="adminStock">Stock Quantity</label>
+              <input type="number" id="adminStock" placeholder="10" min="0" value="10">
+            </div>
+            <div class="form-group">
+              <label for="adminSizes">Sizes (comma-separated)</label>
+              <input type="text" id="adminSizes" placeholder="6, 7, 8, 9, 10, 11" value="6, 7, 8, 9, 10, 11">
+            </div>
+            <div class="form-group full-width">
+              <label for="adminDescription">Description</label>
+              <textarea id="adminDescription" rows="3" placeholder="Product description..." style="background:var(--surface);border:1px solid var(--border);color:var(--text-primary);padding:0.75rem 1rem;border-radius:var(--radius-sm);resize:vertical;font-size:0.9rem;"></textarea>
+            </div>
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:1rem;">
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" id="adminTrending" style="accent-color:var(--accent-primary);"> Trending
+              </label>
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" id="adminFeatured" style="accent-color:var(--accent-primary);"> Featured
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+            <button type="submit" class="btn-primary" id="formSubmitBtn" style="flex:1;justify-content:center;">+ Add Product</button>
+            <button type="button" class="btn-secondary" id="cancelEdit" style="display:none;" onclick="adminMgr.resetForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Products List -->
+      <div class="admin-products-list">
+        <h2>All Products</h2>
+        <div id="adminProductsList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Check if already authenticated this session
+    if (sessionStorage.getItem('kc_admin_auth') === 'true') {
+      document.getElementById('adminLoginGate').style.display = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    function verifyAdmin(e) {
+      e.preventDefault();
+      const password = document.getElementById('adminPassword').value;
+      const ADMIN_PASSWORD = 'admin123'; // Frontend-only demo password
+
+      if (password === ADMIN_PASSWORD) {
+        sessionStorage.setItem('kc_admin_auth', 'true');
+        document.getElementById('adminLoginGate').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        showToast('Welcome, Admin!', 'success');
+      } else {
+        document.getElementById('adminPassword').closest('.form-group').classList.add('has-error');
+        document.getElementById('adminPassword').value = '';
+      }
+      return false;
+    }
+  </script>
+</body>
+</html>

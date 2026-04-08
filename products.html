@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse our premium collection of sneakers. Filter by brand, price, and size.">
+  <title>Products | KicksCulture</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="products-page">
+    <div class="page-title-section" style="padding:100px 0 1rem;">
+      <h1>All <span class="accent">Sneakers</span></h1>
+      <p class="subtitle" id="resultsInfo">Showing all products</p>
+    </div>
+    <div class="products-layout">
+      <!-- Filters Sidebar -->
+      <aside class="filters-sidebar" id="filtersSidebar">
+        <div class="filter-group">
+          <h3>Brand</h3>
+          <div id="brandFilters"></div>
+        </div>
+        <div class="filter-group">
+          <h3>Category</h3>
+          <div id="categoryFilters"></div>
+        </div>
+        <div class="filter-group">
+          <h3>Price Range</h3>
+          <div class="price-range-inputs">
+            <input type="number" id="minPrice" placeholder="Min" min="0">
+            <span>to</span>
+            <input type="number" id="maxPrice" placeholder="Max" min="0">
+          </div>
+        </div>
+        <div class="filter-group">
+          <h3>Size (UK)</h3>
+          <div class="size-selector" id="sizeFilters"></div>
+        </div>
+        <button class="btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn-secondary" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="clearFilters()">Clear All</button>
+      </aside>
+
+      <!-- Products Area -->
+      <div>
+        <div class="products-header">
+          <span class="results-count" id="resultsCount">16 products</span>
+          <select id="sortSelect" onchange="applyFilters()">
+            <option value="">Sort By</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+            <option value="popular">Most Popular</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    let activeFilters = { brand: null, category: null, minPrice: null, maxPrice: null, size: null, search: null };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Parse URL params
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('brand')) activeFilters.brand = params.get('brand');
+      if (params.get('search')) activeFilters.search = params.get('search');
+      if (params.get('category')) activeFilters.category = params.get('category');
+
+      renderFilters();
+      applyFilters();
+
+      // If search from URL, fill the nav search
+      if (activeFilters.search) {
+        const navSearch = document.getElementById('navSearchInput');
+        if (navSearch) navSearch.value = activeFilters.search;
+      }
+    });
+
+    function renderFilters() {
+      // Brand filters
+      const brandContainer = document.getElementById('brandFilters');
+      brandContainer.innerHTML = BRANDS.map(b => `
+        <div class="filter-option">
+          <input type="checkbox" id="brand-${b.id}" value="${b.id}" ${activeFilters.brand === b.id ? 'checked' : ''}>
+          <label for="brand-${b.id}">${b.name} (${getProductsByBrand(b.id).length})</label>
+        </div>`).join('');
+
+      // Category filters
+      const catContainer = document.getElementById('categoryFilters');
+      catContainer.innerHTML = CATEGORIES.map(c => `
+        <div class="filter-option">
+          <input type="checkbox" id="cat-${c.id}" value="${c.id}" ${activeFilters.category === c.id ? 'checked' : ''}>
+          <label for="cat-${c.id}">${c.icon} ${c.name}</label>
+        </div>`).join('');
+
+      // Size filters
+      const sizes = [6, 7, 8, 9, 10, 11, 12];
+      const sizeContainer = document.getElementById('sizeFilters');
+      sizeContainer.innerHTML = sizes.map(s => `
+        <button class="size-btn" data-size="${s}" onclick="toggleSizeFilter(this)">${s}</button>`).join('');
+
+      // Price inputs
+      if (activeFilters.minPrice) document.getElementById('minPrice').value = activeFilters.minPrice;
+      if (activeFilters.maxPrice) document.getElementById('maxPrice').value = activeFilters.maxPrice;
+    }
+
+    function toggleSizeFilter(btn) {
+      btn.classList.toggle('selected');
+    }
+
+    function applyFilters() {
+      // Gather brand filters
+      const checkedBrands = [...document.querySelectorAll('#brandFilters input:checked')].map(i => i.value);
+      const checkedCats = [...document.querySelectorAll('#categoryFilters input:checked')].map(i => i.value);
+      const selectedSize = document.querySelector('#sizeFilters .size-btn.selected');
+      const minPrice = document.getElementById('minPrice').value;
+      const maxPrice = document.getElementById('maxPrice').value;
+      const sortBy = document.getElementById('sortSelect').value;
+
+      let filtered = PRODUCTS;
+
+      // Apply brand filter
+      if (checkedBrands.length > 0) {
+        filtered = filtered.filter(p => checkedBrands.includes(p.brand));
+      }
+
+      // Apply category filter
+      if (checkedCats.length > 0) {
+        filtered = filtered.filter(p => checkedCats.includes(p.category));
+      }
+
+      // Apply size filter
+      if (selectedSize) {
+        const size = parseInt(selectedSize.dataset.size);
+        filtered = filtered.filter(p => p.sizes.includes(size));
+      }
+
+      // Apply price filter
+      if (minPrice) filtered = filtered.filter(p => p.price >= parseInt(minPrice));
+      if (maxPrice) filtered = filtered.filter(p => p.price <= parseInt(maxPrice));
+
+      // Apply search
+      if (activeFilters.search) {
+        const q = activeFilters.search.toLowerCase();
+        filtered = filtered.filter(p => {
+          const brandName = getProductBrandName(p).toLowerCase();
+          return p.name.toLowerCase().includes(q) || brandName.includes(q) || p.description.toLowerCase().includes(q);
+        });
+      }
+
+      // Sort
+      if (sortBy) filtered = sortProducts(filtered, sortBy);
+
+      // Render
+      const grid = document.getElementById('productsGrid');
+      const countEl = document.getElementById('resultsCount');
+      const infoEl = document.getElementById('resultsInfo');
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-cart" style="grid-column:1/-1;"><div class="icon">🔍</div><h2>No sneakers found</h2><p>Try adjusting your filters</p></div>';
+      } else {
+        grid.innerHTML = filtered.map(p => renderProductCard(p)).join('');
+      }
+      countEl.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+      
+      let infoText = `Showing ${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+      if (activeFilters.search) infoText += ` for "${activeFilters.search}"`;
+      infoEl.textContent = infoText;
+    }
+
+    function clearFilters() {
+      activeFilters = { brand: null, category: null, minPrice: null, maxPrice: null, size: null, search: null };
+      document.querySelectorAll('.filters-sidebar input[type="checkbox"]').forEach(i => i.checked = false);
+      document.querySelectorAll('.size-btn.selected').forEach(b => b.classList.remove('selected'));
+      document.getElementById('minPrice').value = '';
+      document.getElementById('maxPrice').value = '';
+      document.getElementById('sortSelect').value = '';
+      applyFilters();
+    }
+  </script>
+</body>
+</html>
